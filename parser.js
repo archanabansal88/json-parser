@@ -1,45 +1,26 @@
-const objectParse = input => {};
+const booleanParser = input => {
+	if (input.indexOf("true") === 0) {
+		return [true, input.slice(4, input.length)];
+	}
 
-/* 4. // create an empty object
+	if (input.indexOf("false") === 0) {
+		return [false, input.slice(5, input.length)];
+	}
 
-let string = "{"a":"hello","b":"567","c":"asd"}"
+	return null;
+};
+//console.log(booleanParser("true123")) // op-- [true,"123"]
+//console.log(booleanParser("123false"))// op-- null
+//console.log(booleanParser("fal123"))// op-- null
 
-let i = 0;
-let obj={};
-if string[i] = '{'
-while(string[i] === '}'){
-2.  //extract key string.slice(i+1, string.indexOf(':'))
-3. // extract value string.slice(string.indexof(':')+1, string.indexof(','))
- i = i + key.length + value.length+2
+const nullParser = input => {
+	if (input.indexOf("null") === 0) {
+		return [null, input.slice(4, input.length)];
+	}
+	return null;
+};
 
-4. // add key value pair to the object
-}
-
-
-
-"{"a":"hello","b":[1,2,null,3,4],"c":"asd"}"
-
-i=0;
-key: a
-value: hello
-i = 0+ 1+ 5+ 2 = 8
-
-key: b
-value: [1,2,null,3,4]
-
-
-
-object
-booean
-string
-number
-null
-array
-
-
-// code .. break your functions into smaller function
-
-"{"a":"hello","b":[1,2,null,3,4],"c":"asd"}"
-
-pointer---current position
- */
+//console.log(nullParser("null123"))// op--[null, "123"]
+//console.log(nullParser("123null"))// op-- null
+//console.log(nullParser12("null")) // op--[null, ""]
+//console.log(nullParser12("123"))// op-- null

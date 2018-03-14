@@ -14,25 +14,25 @@ const valueParser = input => {
 	return null;
 };
 
+const spaceParser = input => {
+	let regexSpace = /^\s*/;
+	let space = input.match(regexSpace);
+	if (space) {
+		return [space[0], input.slice(space[0].length)];
+	}
+	return ["", input];
+};
+
 const commaParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	if (input.startsWith(",")) {
 		return [",", input.slice(1)];
 	}
 	return null;
 };
 
-const spaceParser = input => {
-	let regexSpace = /^\s+/;
-	let space = input.match(regexSpace);
-	if (space) {
-		return [space[0], input.slice(space[0].length)];
-	}
-	return null;
-};
-
 const booleanParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	if (input.startsWith("true")) {
 		return [true, input.slice(4)];
 	}
@@ -44,25 +44,25 @@ const booleanParser = input => {
 	return null;
 };
 
-//console.log(booleanParser("true123")) // op-- [true,"123"]
-//console.log(booleanParser("123false"))// op-- null
-//console.log(booleanParser("fal123"))// op-- null
+// console.log(booleanParser("true123")); // op-- [true,"123"]
+// console.log(booleanParser("123false")); // op-- null
+// console.log(booleanParser("fal123")); // op-- null
 
 const nullParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	if (input.startsWith("null")) {
 		return [null, input.slice(4)];
 	}
 	return null;
 };
 
-//console.log(nullParser("null123"))// op--[null, "123"]
-//console.log(nullParser("123null"))// op-- null
-//console.log(nullParser("null")) // op--[null, ""]
-//console.log(nullParser("123"))// op-- null
+// console.log(nullParser("null123")); // op--[null, "123"]
+// console.log(nullParser("123null")); // op-- null
+// console.log(nullParser("null")); // op--[null, ""]
+// console.log(nullParser("123")); // op-- null
 
 const numberParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	let regexNum = /^[-+]?(\d+(\.\d*)?|\.\d+)([e][+-]?\d+)?/;
 	let num = input.match(regexNum);
 	if (num) {
@@ -77,7 +77,7 @@ const numberParser = input => {
 // console.log(numberParser("0000jhgjghj"));
 
 const stringParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	if (input[0] !== '"') {
 		return null;
 	}
@@ -100,7 +100,7 @@ const stringParser = input => {
 // console.log(stringParser('""'));
 
 const arrayParser = input => {
-	input = input.trim();
+	input = spaceParser(input)[1];
 	if (input[0] === "[") {
 		let arr = [];
 		input = input.slice(1);
@@ -134,5 +134,8 @@ const arrayParser = input => {
 // console.log(arrayParser('[ "a" 1 , "b"]'));
 // console.log(arrayParser('[ "a" , "b"]]'));
 // console.log(arrayParser('[ "a" ,]'));
-//console.log(arrayParser('["a\nb" , ["b", ["b", "c"]]]'));
-// console.log(arrayParser('["a" , 123]')[0]);
+// console.log(arrayParser('["a\nb" , ["b", ["b", "c"]]]'));
+// console.log(arrayParser('["a" , 123]'));
+// console.log(arrayParser('["a" , null123,,hhhd]'));
+// console.log(arrayParser('["a\\\\\n" , 1"23,   ,]'));
+// console.log(arrayParser('["a" ,true,]'));

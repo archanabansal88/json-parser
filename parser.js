@@ -1,5 +1,4 @@
 const booleanParser = input => {
-  input = spaceParser(input)[1]
   if (input.startsWith('true')) {
     return [true, input.slice(4)]
   }
@@ -12,7 +11,6 @@ const booleanParser = input => {
 }
 
 const nullParser = input => {
-  input = spaceParser(input)[1]
   if (input.startsWith('null')) {
     return [null, input.slice(4)]
   }
@@ -20,7 +18,6 @@ const nullParser = input => {
 }
 
 const numberParser = input => {
-  input = spaceParser(input)[1]
   let regexNum = /^[-+]?(\d+(\.\d*)?|\.\d+)([e][+-]?\d+)?/
   let num = input.match(regexNum)
   if (num) {
@@ -30,7 +27,6 @@ const numberParser = input => {
 }
 
 const stringParser = input => {
-  input = spaceParser(input)[1]
   if (input[0] === '"') {
     input = input.slice(1)
     let str = ''
@@ -56,11 +52,13 @@ const spaceParser = input => {
   if (space) {
     return [space[0], input.slice(space[0].length)]
   }
-  return ['', input]
+  return null
 }
 
 const commaParser = input => {
-  input = spaceParser(input)[1]
+  if (spaceParser(input)) {
+    input = spaceParser(input)[1]
+  }
   if (input.startsWith(',')) {
     return [',', input.slice(1)]
   }
@@ -68,25 +66,30 @@ const commaParser = input => {
 }
 
 const arrayParser = input => {
-  input = spaceParser(input)[1]
   if (input[0] === '[') {
     let arr = []
     input = input.slice(1)
-    let output
-    while (input[0] !== ']') {
-      output = valueParser(input)
-      if (output) {
-        arr.push(output[0])
-        input = output[1]
+    while (input && input[0] !== ']') {
+      if (spaceParser(input)) {
+        input = spaceParser(input)[1]
+      }
+      // passing the input to valueParser
+      if (valueParser(input)) {
+        arr.push(valueParser(input)[0])
+        input = valueParser(input)[1]
       } else {
         return null
       }
+      // checking for comma
       if (commaParser(input)) {
         input = commaParser(input)[1]
         if (input[0] === ']') {
           return null
         }
-      } else if (input[0] !== ']' && commaParser(input) === null) {
+        if (spaceParser(input)) {
+          input = spaceParser(input)[1]
+        }
+      } else if (input[0] !== ']' && !commaParser(input)) {
         return null
       }
     }
@@ -99,7 +102,9 @@ const arrayParser = input => {
 }
 
 const colonParser = input => {
-  input = spaceParser(input)[1]
+  if (spaceParser(input)) {
+    input = spaceParser(input)[1]
+  }
   if (input.startsWith(':')) {
     return [':', input.slice(1)]
   }
@@ -107,26 +112,32 @@ const colonParser = input => {
 }
 
 const objectParser = input => {
-  input = spaceParser(input)[1]
-
   if (input[0] === '{') {
     input = input.slice(1)
     let key = []
     let value = []
     let obj = {}
     while (input[0] !== '}') {
+      if (spaceParser(input)) {
+        input = spaceParser(input)[1]
+      }
+      // checking if input[0] is string or not
       if (stringParser(input)) {
         key.push(stringParser(input)[0])
         input = stringParser(input)[1]
       } else {
         return null
       }
-
+      // checking for colon
       if (colonParser(input)) {
         input = colonParser(input)[1]
         if (input[0] === '}') {
           return null
         }
+        if (spaceParser(input)) {
+          input = spaceParser(input)[1]
+        }
+        // passing input to valueParser
         if (valueParser(input)) {
           value.push(valueParser(input)[0])
           input = valueParser(input)[1]
@@ -134,10 +145,14 @@ const objectParser = input => {
       } else {
         return null
       }
+      // checking for comma
       if (commaParser(input)) {
         input = commaParser(input)[1]
         if (input[0] === '}') {
           return null
+        }
+        if (spaceParser(input)) {
+          input = spaceParser(input)[1]
         }
       } else if (input[0] !== '}' && commaParser(input) === null) {
         return null

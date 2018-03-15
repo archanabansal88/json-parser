@@ -5,7 +5,7 @@
 describe('String Parser', function () {
   it('should return valid string if found', function () {
     const obj = {
-      '"abc\\"c"d"': ['abc\\"c', 'd"'],
+      '"abc\\"c"d"': ['abc\"c', 'd"'],
       '"hello\n"123"': ['hello\n', '123"'],
       '""': ['', '']
     }

@@ -18,7 +18,7 @@ const nullParser = input => {
 }
 
 const numberParser = input => {
-  let regexNum = /^[-+]?(\d+(\.\d*)?|\.\d+)([e][+-]?\d+)?/
+  let regexNum = /^[-]?(\d+(\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?/
   let num = input.match(regexNum)
   if (num) {
     return [parseFloat(num[0]), input.slice(num[0].length)]
@@ -28,12 +28,28 @@ const numberParser = input => {
 
 const stringParser = input => {
   if (input[0] === '"') {
+    var escapes = {
+      'b': '\b',
+      'n': '\n',
+      't': '\t',
+      'r': '\r',
+      'f': '\f',
+      '"': '"',
+      '\\': '\\'
+    }
+
     input = input.slice(1)
     let str = ''
     while (input && input[0] !== '"') {
       if (input[0] === '\\') {
-        str += input.slice(0, 2)
-        input = input.slice(2)
+        input = input.slice(1)
+        if (escapes.hasOwnProperty(input[0])) {
+          str += escapes[input[0]]
+        } else {
+          str += input[0]
+        }
+        input = input.slice(1)
+        continue
       }
       str += input[0]
       input = input.slice(1)
@@ -49,16 +65,10 @@ const stringParser = input => {
 const spaceParser = input => {
   let regexSpace = /^\s*/
   let space = input.match(regexSpace)
-  if (space) {
-    return [space[0], input.slice(space[0].length)]
-  }
-  return null
+  return space ? [space[0], input.slice(space[0].length)] : null
 }
 
 const commaParser = input => {
-  if (spaceParser(input)) {
-    input = spaceParser(input)[1]
-  }
   if (input.startsWith(',')) {
     return [',', input.slice(1)]
   }
@@ -69,28 +79,37 @@ const arrayParser = input => {
   if (input[0] === '[') {
     let arr = []
     input = input.slice(1)
+
     while (input && input[0] !== ']') {
-      if (spaceParser(input)) {
-        input = spaceParser(input)[1]
+      input = trimSpaces(input)
+
+      if (input[0] === ']') {
+        return [arr, input.slice(1)]
       }
+
       // passing the input to valueParser
-      if (valueParser(input)) {
-        arr.push(valueParser(input)[0])
-        input = valueParser(input)[1]
+      let valueOutput = valueParser(input)
+      if (valueOutput) {
+        arr.push(valueOutput[0])
+        input = valueOutput[1]
       } else {
         return null
       }
+      input = trimSpaces(input)
+
       // checking for comma
-      if (commaParser(input)) {
-        input = commaParser(input)[1]
+      let commaOutput = commaParser(input)
+      if (commaOutput) {
+        input = commaOutput[1]
         if (input[0] === ']') {
           return null
         }
-        if (spaceParser(input)) {
-          input = spaceParser(input)[1]
+        input = trimSpaces(input)
+      } else {
+        input = trimSpaces(input)
+        if (input[0] !== ']') {
+          return null
         }
-      } else if (input[0] !== ']' && !commaParser(input)) {
-        return null
       }
     }
     if (input[0] === ']') {
@@ -102,13 +121,18 @@ const arrayParser = input => {
 }
 
 const colonParser = input => {
-  if (spaceParser(input)) {
-    input = spaceParser(input)[1]
-  }
   if (input.startsWith(':')) {
     return [':', input.slice(1)]
   }
   return null
+}
+
+const trimSpaces = input => {
+  let spaceOutput = spaceParser(input)
+  if (spaceOutput) {
+    input = spaceOutput[1]
+  }
+  return input
 }
 
 const objectParser = input => {
@@ -118,44 +142,56 @@ const objectParser = input => {
     let value = []
     let obj = {}
     while (input[0] !== '}') {
-      if (spaceParser(input)) {
-        input = spaceParser(input)[1]
-      }
-      // checking if input[0] is string or not
-      if (stringParser(input)) {
-        key.push(stringParser(input)[0])
-        input = stringParser(input)[1]
+      input = trimSpaces(input)
+
+      /*
+       * check if key is String else it is not a valid object
+       */
+      let stringOutput = stringParser(input)
+      if (stringOutput) {
+        key.push(stringOutput[0])
+        input = stringOutput[1]
       } else {
         return null
       }
-      // checking for colon
-      if (colonParser(input)) {
-        input = colonParser(input)[1]
+
+      /* After extracting key, check for colon
+       * if colon is not present, then it is not a valid object
+       * else get the value
+       */
+      input = trimSpaces(input)
+      let colonOutput = colonParser(input)
+      if (colonOutput) {
+        input = colonOutput[1]
+
         if (input[0] === '}') {
           return null
         }
-        if (spaceParser(input)) {
-          input = spaceParser(input)[1]
-        }
+
         // passing input to valueParser
-        if (valueParser(input)) {
-          value.push(valueParser(input)[0])
-          input = valueParser(input)[1]
+        input = trimSpaces(input)
+        let valueOut = valueParser(input)
+        if (valueOut) {
+          value.push(valueOut[0])
+          input = valueOut[1]
         }
       } else {
         return null
       }
+
       // checking for comma
-      if (commaParser(input)) {
-        input = commaParser(input)[1]
+      input = trimSpaces(input)
+      let commaOutput = commaParser(input)
+      if (commaOutput) {
+        input = commaOutput[1]
         if (input[0] === '}') {
           return null
         }
-        if (spaceParser(input)) {
-          input = spaceParser(input)[1]
+      } else {
+        input = trimSpaces(input)
+        if (input[0] !== '}') {
+          return null
         }
-      } else if (input[0] !== '}' && commaParser(input) === null) {
-        return null
       }
     }
     if (input[0] === '}') {
@@ -189,7 +225,7 @@ const valueParser = factoryParser(
   objectParser
 )
 
-const JSONParser = function (input) { // eslint-disable-line no-unused-vars
+const JSONParser = function (input) {
   let result = valueParser(input)
   if (result && result[1] !== '') {
     return 'Invalid JSON'

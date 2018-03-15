@@ -199,3 +199,5 @@ const JSONParser = function (input) { // eslint-disable-line no-unused-vars
     return 'Invalid JSON'
   }
 }
+
+exports.parse = JSONParser

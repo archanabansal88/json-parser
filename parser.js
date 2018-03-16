@@ -27,8 +27,11 @@ const numberParser = input => {
 }
 
 const stringParser = input => {
+  /*
+  checking if the input data is wrapped in double quotes '"'
+  */
   if (input[0] === '"') {
-    var escapes = {
+    let escapes = {
       'b': '\b',
       'n': '\n',
       't': '\t',
@@ -43,6 +46,9 @@ const stringParser = input => {
     while (input && input[0] !== '"') {
       if (input[0] === '\\') {
         input = input.slice(1)
+        /*
+        checking for escape characters
+        */
         if (escapes.hasOwnProperty(input[0])) {
           str += escapes[input[0]]
         } else {
@@ -76,18 +82,24 @@ const commaParser = input => {
 }
 
 const arrayParser = input => {
+  /*
+  checks if the input data begins with '['
+  */
   if (input[0] === '[') {
     let arr = []
     input = input.slice(1)
 
     while (input && input[0] !== ']') {
       input = trimSpaces(input)
-
+      /*
+      checks if the input data begins with ']' and returning the empty array
+      */
       if (input[0] === ']') {
         return [arr, input.slice(1)]
       }
-
-      // passing the input to valueParser
+      /*
+      passing the input to valueParser and if value is not valid then returning null
+      */
       let valueOutput = valueParser(input)
       if (valueOutput) {
         arr.push(valueOutput[0])
@@ -97,7 +109,10 @@ const arrayParser = input => {
       }
       input = trimSpaces(input)
 
-      // checking for comma
+      /* After getting the value checking for comma
+       * if comma is not present and its not the last value, then it is not a valid object
+       * else loop again
+       */
       let commaOutput = commaParser(input)
       if (commaOutput) {
         input = commaOutput[1]
@@ -136,6 +151,9 @@ const trimSpaces = input => {
 }
 
 const objectParser = input => {
+  /*
+  checks if the input data begins with '{'
+  */
   if (input[0] === '{') {
     input = input.slice(1)
     let key = []
@@ -143,7 +161,6 @@ const objectParser = input => {
     let obj = {}
     while (input[0] !== '}') {
       input = trimSpaces(input)
-
       /*
        * check if key is String else it is not a valid object
        */
@@ -167,8 +184,9 @@ const objectParser = input => {
         if (input[0] === '}') {
           return null
         }
-
-        // passing input to valueParser
+        /*
+        passing input to valueParser and extract the value
+        */
         input = trimSpaces(input)
         let valueOut = valueParser(input)
         if (valueOut) {
@@ -179,7 +197,10 @@ const objectParser = input => {
         return null
       }
 
-      // checking for comma
+      /* After extracting key and value check for comma
+       * if comma is not present and its not the last value, then it is not a valid object
+       * else loop again
+       */
       input = trimSpaces(input)
       let commaOutput = commaParser(input)
       if (commaOutput) {
@@ -197,7 +218,9 @@ const objectParser = input => {
     if (input[0] === '}') {
       input = input.slice(1)
     }
-
+    /*
+    setting key and value to empty object
+    */
     for (let i = 0; i < key.length; i++) {
       obj[key[i]] = value[i]
     }
@@ -226,8 +249,9 @@ const valueParser = factoryParser(
 )
 
 const JSONParser = function (input) {
+  input = trimSpaces(input)
   let result = valueParser(input)
-  if (result && result[1] !== '') {
+  if (result && trimSpaces(result[1]) !== '') {
     return 'Invalid JSON'
   } else if (result) {
     return result[0]
